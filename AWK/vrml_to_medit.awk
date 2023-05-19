@@ -25,7 +25,7 @@ BEGIN {
       continue
     }
     split($0, coords)
-    printf "%d %f %f %f\n", node_idx, coords[1], coords[2], coords[3]
+    printf "%d, %f %f %f\n", node_idx, coords[1], coords[2], coords[3]
     i++
     node_idx++
     getline
@@ -51,7 +51,7 @@ BEGIN {
       # First element, print the element header
       print "Triangles"
     }
-    printf "%d %d %d %d\n", elem_idx, indices[1], indices[2], indices[3]
+    printf "%d, %d %d %d\n", elem_idx, indices[1], indices[2], indices[3]
     i++
     elem_idx++
     getline

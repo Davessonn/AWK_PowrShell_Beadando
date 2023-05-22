@@ -7,9 +7,9 @@ param (
     [string] $OutputFile
 )
 
-# Ellenőrizzük, hogy a kimeneti fájl neve megadva van-e. Ha nincs megadva, akkor a kimenetet a bemeneti fájl nevére alakítjuk.
+# Ellenőrizzük, hogy a kimeneti fájl neve megadva van-e. Ha nincs megadva, akkor a kimenet alapértelmezett értéket kap.
 if (-not $OutputFile) {
-    $OutputFile =  "output.mesh" # [IO.Path]::ChangeExtension($InputFile, ".mesh")
+    $OutputFile =  "PS_output.mesh" # [IO.Path]::ChangeExtension($InputFile, ".mesh")
 }
 
 # Olvassuk be a bemeneti fájlt
@@ -21,6 +21,7 @@ $meditContent = @"
 MeshVersionFormatted 1
 Dimension 3
 Vertices
+
 "@
 
 # Szövegfeldolgozás és adatok kinyerése a VRML tartalomból
@@ -30,20 +31,32 @@ $coordIndexIndex = $vrmlContent.IndexOf("coordIndex [") + 12
 $pointsText = $vrmlContent.Substring($pointIndex, $coordIndexIndex - $pointIndex).Trim()
 $coordIndexText = $vrmlContent.Substring($coordIndexIndex).Trim()
 
+
 # Koordináták feldolgozása és hozzáadása a MEDIT tartalomhoz
 $points = $pointsText -split '\r?\n' | Where-Object { $_ -match '\d+\.\d+\s\d+\.\d+\s\d+\.\d+' }
 
 $points | ForEach-Object {
     $point = $_ -split '\s+' | Select-Object -Skip 1
-    $meditContent += "{0} {1} {2} {3}`n" -f ++$node_idx, $point[0], $point[1], $point[2]
+    $meditContent += "{0}, {1} {2} {3}`n" -f ++$node_idx, $point[0], $point[1], $point[2]
 }
 
 # Háromszögek feldolgozása és hozzáadása a MEDIT tartalomhoz
-$triangles = $coordIndexText -split '\r?\n' | Where-Object { $_ -match '\d+\s\d+\s\d+\s-1' }
-
+#$triangles = $coordIndexText -split '\r?\n' | Where-Object { $_ -match '\d+\s\d+\s\d+\s-1' }
+$meditContent += "Triangles`n"
+$triangles = $coordIndexText -split '\r?\n' | Where-Object { $_ -match '\d+(?:,\s\d+)*,\s-1' }
+Write-Host "Triangles:"`n
+Write-Host $triangles
+Write-Host "Triangles end"`n
 $triangles | ForEach-Object {
-    $indices = $_ -split '\s+' | Select-Object -SkipLast 1
-    $meditContent += "{0} {1} {2} {3}`n" -f ++$elem_idx, $indices[0], $indices[1], $indices[2]
+    #$indices = $_ -split '\s+' | Select-Object -SkipLast 1
+    $indices = ($_ -split '#')[0].Trim()
+    Write-Host "indices"`n
+    Write-Host $indices
+    $indices | ForEach-Object {
+        $numbers = $_ -split ','
+        $meditContent += "{0} {1} {2} {3}`n" -f ++$elem_idx, $numbers[0].Trim(), $numbers[1].Trim(), $numbers[2].Trim(), $numbers[3].Trim()
+    }
+    #$meditContent += "{0} {1} {2} {3}`n" -f ++$elem_idx, $indices[0], $indices[1], $indices[2]
 }
 
 # MEDIT tartalom kimenetének írása a fájlba

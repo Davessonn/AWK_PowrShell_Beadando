@@ -41,22 +41,14 @@ $points | ForEach-Object {
 }
 
 # Háromszögek feldolgozása és hozzáadása a MEDIT tartalomhoz
-#$triangles = $coordIndexText -split '\r?\n' | Where-Object { $_ -match '\d+\s\d+\s\d+\s-1' }
 $meditContent += "Triangles`n"
 $triangles = $coordIndexText -split '\r?\n' | Where-Object { $_ -match '\d+(?:,\s\d+)*,\s-1' }
-Write-Host "Triangles:"`n
-Write-Host $triangles
-Write-Host "Triangles end"`n
 $triangles | ForEach-Object {
-    #$indices = $_ -split '\s+' | Select-Object -SkipLast 1
     $indices = ($_ -split '#')[0].Trim()
-    Write-Host "indices"`n
-    Write-Host $indices
     $indices | ForEach-Object {
         $numbers = $_ -split ','
         $meditContent += "{0} {1} {2} {3}`n" -f ++$elem_idx, $numbers[0].Trim(), $numbers[1].Trim(), $numbers[2].Trim(), $numbers[3].Trim()
     }
-    #$meditContent += "{0} {1} {2} {3}`n" -f ++$elem_idx, $indices[0], $indices[1], $indices[2]
 }
 
 # MEDIT tartalom kimenetének írása a fájlba
